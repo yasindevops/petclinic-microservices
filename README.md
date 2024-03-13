@@ -2513,7 +2513,7 @@ git push origin dev
 - Download and extract the latest release of eksctl with the following command.
 
 ```bash
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+curl --silent --location "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
 ```
 
 - Move the extracted binary to /usr/local/bin.
@@ -2533,7 +2533,7 @@ eksctl version
 - Download the Amazon EKS vended kubectl binary.
 
 ```bash
-curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.7/2023-11-14/bin/linux/amd64/kubectl
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
 ```
 
 - Apply execute permissions to the binary.
@@ -2551,7 +2551,7 @@ sudo mv kubectl /usr/local/bin
 - After you install kubectl , you can verify its version with the following command:
 
 ```bash
-kubectl version --short --client
+kubectl version --client
 ```
 
 - Switch user to jenkins for creating eks cluster. Execute following commands as `jenkins` user.
@@ -2589,7 +2589,7 @@ eksctl create cluster -f cluster.yaml
 
 ```bash
 export PATH=$PATH:$HOME/bin
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -3056,7 +3056,7 @@ aws ec2 create-key-pair --region us-east-1 --key-name petclinic-rancher --query 
 chmod 400 ~/.ssh/petclinic-rancher.pem
 ```
 
-* Launch an EC2 instance using `Ubuntu Server 20.04 LTS (HVM) (64-bit x86)` with `t3a.medium` type, 16 GB root volume,  `petclinic-rke-cluster-sg` security group, `petclinic-rke-role` IAM Role, `Name:Petclinic-Rancher-Cluster-Instance` tag and `petclinic-rancher.pem` key-pair. Take note of `subnet id` of EC2. 
+* Launch an EC2 instance using `Ubuntu Server 22.04 LTS (HVM) (64-bit x86)` with `t3a.medium` type, 16 GB root volume,  `petclinic-rke-cluster-sg` security group, `petclinic-rke-role` IAM Role, `Name:Petclinic-Rancher-Cluster-Instance` tag and `petclinic-rancher.pem` key-pair. Take note of `subnet id` of EC2. 
 
 * Attach a tag to the `nodes (intances)`, `subnets` and `security group` for Rancher with `Key = kubernetes.io/cluster/Petclinic-Rancher` and `Value = owned`.
   
@@ -3069,26 +3069,25 @@ sudo hostnamectl set-hostname rancher-instance-1
 sudo apt-get update -y
 sudo apt-get upgrade -y
 # Update the apt package index and install packages to allow apt to use a repository over HTTPS
-sudo apt-get install \
-  apt-transport-https \
-  ca-certificates \
-  curl \
-  gnupg \
-  lsb-release
+sudo apt-get update
+sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 # Add the repository to Apt sources:
 echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 
+# RKE is not compatible with the current Docker version (v23 hence we need to install an earlier version of Docker)
+# List the available versions:
+
+apt-cache madison docker-ce | awk '{ print $3 }'
+
 # Install and start Docker
-# RKE is not compatible with the current Docker version (v23 hence we need to install an earlier version of Docker
-sudo apt-get install docker-ce=5:20.10.24~3-0~ubuntu-jammy  docker-ce-cli=5:20.10.24~3-0~ubuntu-jammy containerd.io docker-compose-plugin
+sudo apt-get install docker-ce=5:20.10.24~3-0~ubuntu-jammy  docker-ce-cli=5:20.10.24~3-0~ubuntu-jammy containerd.io docker-buildx-plugin docker-compose-plugin
 sudo systemctl start docker
 sudo systemctl enable docker
 
@@ -3144,7 +3143,7 @@ From ACM            : *.clarusway.us   # change with your dns name
 * Install RKE, the Rancher Kubernetes Engine, [Kubernetes distribution and command-line tool](https://rancher.com/docs/rke/latest/en/installation/)) on Jenkins Server.
 
 ```bash
-curl -SsL "https://github.com/rancher/rke/releases/download/v1.4.11/rke_linux-amd64" -o "rke_linux-amd64"
+curl -SsL "https://github.com/rancher/rke/releases/download/v1.5.6/rke_linux-amd64" -o "rke_linux-amd64"
 sudo mv rke_linux-amd64 /usr/local/bin/rke
 chmod +x /usr/local/bin/rke
 rke --version
@@ -3230,7 +3229,7 @@ kubectl create namespace cattle-system
 ```bash
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
-  --set hostname=rancher.clarusway.us \
+  --set hostname=rancher.yasinhasturk.com \
   --set tls=external \
   --set replicas=1 \
   --set global.cattle.psp.enabled=false
