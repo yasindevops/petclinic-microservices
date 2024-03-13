@@ -1,7 +1,7 @@
 nodes:
   - address: 127.0.0.1                # Change with the Private Ip of rancher server
     internal_address: 127.0.0.1      # Change with the Private Ip of rancher server
-    user: ubuntu
+    user: Yasin
     role:
       - controlplane
       - etcd
