@@ -67,7 +67,7 @@
   tasks:
       
   - name: pull kubernetes images before installation
-    become: yes
+    become: true
     shell: kubeadm config images pull
 
   - name: initialize the Kubernetes cluster using kubeadm
