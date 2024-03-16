@@ -3065,9 +3065,6 @@ chmod 400 ~/.ssh/petclinic-rancher.pem
 ```bash
 # Set hostname of instance
 sudo hostnamectl set-hostname rancher-instance-1
-# Update OS 
-sudo apt-get update -y
-sudo apt-get upgrade -y
 # Update the apt package index and install packages to allow apt to use a repository over HTTPS
 sudo apt-get update
 sudo apt-get install ca-certificates curl
@@ -3081,7 +3078,7 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 
-# RKE is not compatible with the current Docker version (v23 hence we need to install an earlier version of Docker)
+# RKE is not compatible with the current Docker version (v25 hence we need to install an earlier version of Docker)
 # List the available versions:
 
 apt-cache madison docker-ce | awk '{ print $3 }'
@@ -3229,7 +3226,7 @@ kubectl create namespace cattle-system
 ```bash
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
-  --set hostname=rancher.yasinhasturk.com \
+  --set hostname=rancher.clarusway.us \
   --set tls=external \
   --set replicas=1 \
   --set global.cattle.psp.enabled=false
@@ -3404,6 +3401,42 @@ git checkout release
 git merge feature/msp-25
 git push origin release
 ```
+
+### Download the package from nexus server (Optinal) 
+
+- Create a folder under `/home/ec2-user` folder named `nexus-optional`.
+
+```bash
+mkdir nexus-optional && cd nexus-optional/
+```
+
+- Get the link address of `spring-petclinic-admin-server-2.1.2.jar` file and download it.
+
+```bash
+curl -u admin:123  -L -X GET  http://34.228.221.228:8081/repository/maven-releases/org/springframework/samples/petclinic/admin/spring-petclinic-admin-server/2.1.2/spring-petclinic-admin-server-2.1.2.jar --output admin.jar
+```
+
+- Create a Docker file for admin-server.
+
+```Dockerfile
+FROM openjdk:11-jre
+ARG DOCKERIZE_VERSION=v0.7.0
+ENV SPRING_PROFILES_ACTIVE docker,mysql
+ADD https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz dockerize.tar.gz
+RUN tar -xzf dockerize.tar.gz
+RUN chmod +x dockerize
+COPY admin.jar /app.jar  # We just change this line.
+EXPOSE 9090
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+```
+
+- Build the image
+
+```bash
+docker build -t admin-server .
+```
+
+- This is the alternative method to create an image.
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ## MSP 26 - Prepare a Staging Pipeline
@@ -3704,7 +3737,7 @@ eksctl create cluster -f cluster.yaml
 
 ```bash
 export PATH=$PATH:$HOME/bin
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
 
@@ -3996,7 +4029,7 @@ sudo su - jenkins
   * Install the `Custom Resource Definition` resources separately
 
   ```bash
-  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml
   ```
 
   * Install the cert-manager Helm chart
@@ -4005,7 +4038,7 @@ sudo su - jenkins
 helm install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --version v1.13.2
+  --version v1.14.4
   ```
 
   * Verify that the cert-manager is deployed correctly.
